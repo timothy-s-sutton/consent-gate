@@ -164,7 +164,8 @@ def _search_tool(gate: Gate):
         """Search customers. Only customers whose consent allows this purpose are returned.
 
         The response counts how many were excluded by consent but never says who. For
-        name searches the count is withheld, since it could reveal one person's choice.
+        name searches and filters matching fewer than 5 customers, the count is withheld,
+        since it could reveal one person's choice.
         """
         return _call(
             gate.search_customers,
@@ -185,7 +186,8 @@ def _audience_tool(gate: Gate):
         state: Annotated[str | None, Field(description="Two-letter US state code")] = None,
     ) -> CustomerResponse:
         """Build a marketing audience: customers with marketing consent granted who have not
-        opted out of sale/share. Returns at most 50, plus exclusion counts by reason."""
+        opted out of sale/share. Returns at most 50, plus exclusion counts by reason
+        (withheld when fewer than 5 customers match the filters)."""
         return _call(gate.get_marketing_audience, segment=segment, purpose=purpose, state=state)
 
     return get_marketing_audience

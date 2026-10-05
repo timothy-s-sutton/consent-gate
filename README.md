@@ -32,7 +32,7 @@ consent-gate shows a pattern those teams can sign off on. The agent never touche
 
 ## Proof
 
-252 automated tests, including:
+253 automated tests, including:
 
 - Every allow and deny case in [SPEC.md](SPEC.md) section 9, written before the policy engine.
 - **Prompt injection, end to end.** A sweep of 300+ calls runs against a clean database and one where every customer record carries an attack. Examples include "ignore previous instructions", fake JSON to break out of the response, fake system tags, fake tool calls, and hidden SSNs. Every decision, result set, and audit record is identical.
@@ -103,8 +103,8 @@ Add `consent-gate-marketing` and `consent-gate-fraud` the same way, then fully q
 |---|---|---|---|
 | `whoami` | all | none | Role, allowed purposes and legal bases, visible tools, fields returned, record caps |
 | `lookup_customer` | support, fraud | `customer_id`, `purpose` | One record, filtered and masked, or a denial |
-| `search_customers` | marketing, fraud | `purpose`, `state?`, `segment?`, `name_contains?`, `limit` (cap 25) | Consented matches, an excluded-by-consent count (withheld for name searches), and a `truncated` flag |
-| `get_marketing_audience` | marketing | `segment`, `state?`, `purpose` (must be `marketing`) | Up to 50 customers with consent granted and no sale/share opt-out, plus exclusion counts by reason |
+| `search_customers` | marketing, fraud | `purpose`, `state?`, `segment?`, `name_contains?`, `limit` (cap 25) | Consented matches, an excluded-by-consent count (withheld for name searches and groups under 5), and a `truncated` flag |
+| `get_marketing_audience` | marketing | `segment`, `state?`, `purpose` (must be `marketing`) | Up to 50 customers with consent granted and no sale/share opt-out, plus exclusion counts by reason (withheld for groups under 5) |
 | `search_policy` | all | `question`, `k` (cap 5) | Cited sections of Larkspur's privacy, data classification, and AI use policies |
 
 Customer-data tools return one envelope: `decision` (`allow`, `partial`, or `deny`), `reason`, `purpose`, `records`, `excluded_by_consent`, `truncated`, and `request_id`. The `request_id` matches the audit log line.
@@ -124,7 +124,7 @@ src/consent_gate/
   policy_search.py  offline TF-IDF retrieval
   seed.py        reproducible synthetic data, including planted injection notes
   models.py, config.py
-tests/           252 tests
+tests/           253 tests
 docs/            ARCHITECTURE, THREAT_MODEL, CONTROLS, RED_TEAM
 ```
 

@@ -234,6 +234,27 @@ def test_name_search_does_not_reveal_one_persons_consent(gate, db_path, audit_pa
     assert [r["decision"] for r in rows] == ["partial", "allow"]
 
 
+def test_small_groups_do_not_reveal_consent(gate, db_path, audit_path):
+    # A state + segment group of one customer who is excluded from marketing.
+    state, segment = query(
+        db_path,
+        "SELECT c.state, c.segment FROM customers c JOIN consents k USING (customer_id) "
+        "WHERE k.purpose = 'marketing' GROUP BY c.state, c.segment "
+        "HAVING COUNT(*) = 1 AND SUM(k.status != 'granted' OR c.do_not_sell_or_share) = 1 "
+        "ORDER BY c.state, c.segment LIMIT 1",
+    )[0]
+    m = gate("marketing_analyst")
+    search = m.search_customers("marketing", state=state, segment=segment)
+    audience = m.get_marketing_audience(segment, "marketing", state=state)
+    for resp in (search, audience):
+        assert resp.returned == 0
+        assert resp.decision == "allow"
+        assert resp.excluded_by_consent is None
+        assert resp.excluded_by_reason is None
+        assert "fewer than 5 customers" in resp.reason
+    assert [r["excluded_count"] for r in audit_rows(audit_path)] == [1, 1]
+
+
 def test_search_without_name_filter_still_reports_exclusions(gate):
     resp = gate("marketing_analyst").search_customers("marketing", state="PA")
     assert resp.excluded_by_consent is not None and resp.excluded_by_consent > 0

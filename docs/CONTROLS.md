@@ -27,7 +27,7 @@ This maps each consent-gate control to recognized frameworks, and points to the 
 | Decisions independent of content | The policy engine never reads free text. Tested by comparing a clean and a poisoned database. | Measure | LLM01 | AI system verification and validation <!-- VERIFY --> | Integrity | `test_injection.py::test_invariant_12_*`; `test_policy.py` case 12 |
 | Pure policy engine | `policy.py` has no I/O, enforced by a test, so every decision is reproducible. | Measure | LLM06 | AI system verification and validation <!-- VERIFY --> | Accountability | `test_policy.py::test_policy_module_is_pure` |
 | Record caps, no export tool | Hard caps in code: 25 per search, 50 per audience, 5 per policy search. No export or write tool. | Manage | LLM06, LLM10 | Use of AI systems | Data minimization | `test_policy.py` case 9; `test_tools.py::test_search_limit_above_cap_is_clamped` |
-| Non-disclosure of exclusions | Searches count exclusions but never list them. Name searches withhold the count. Missing and excluded customers get the same message. | Manage | LLM02 | Data for AI systems | Data minimization | `test_tools.py::test_name_search_does_not_reveal_one_persons_consent`, `test_lookup_unknown_customer_does_not_reveal_existence` |
+| Non-disclosure of exclusions | Searches count exclusions but never list them. Name searches and groups of fewer than 5 withhold the count. Missing and excluded customers get the same message. | Manage | LLM02 | Data for AI systems | Data minimization | `test_tools.py::test_name_search_does_not_reveal_one_persons_consent`, `test_small_groups_do_not_reveal_consent`, `test_lookup_unknown_customer_does_not_reveal_existence` |
 | Read-only data access | SQLite opened with `mode=ro` and `query_only`. Parameterized queries only. | Manage | LLM06 | AI system operation <!-- VERIFY --> | Integrity | `test_injection.py::test_injected_name_filters_match_nothing` |
 | Complete audit trail | One record per call: allowed, partial, or denied. Calls rejected before a handler runs are audited by middleware. | Govern, Measure | LLM06 | Event logging; monitoring <!-- VERIFY --> | Accountability | `test_tools.py::test_every_handler_call_writes_one_linked_audit_record`, `test_client_unknown_tool_is_audited` |
 | Tamper-evident audit | Hash chain with a `verify` command. Appends check the previous hash. | Govern, Measure | n/a | Event logging <!-- VERIFY --> | Accountability | `test_audit.py` tamper tests |
@@ -41,6 +41,6 @@ This maps each consent-gate control to recognized frameworks, and points to the 
 These are tracked as residual risks in [THREAT_MODEL.md](THREAT_MODEL.md):
 
 - No rate limits or per-session quotas, so enumeration through many small calls is visible in the audit log but not prevented (T7).
-- Exclusion counts can still single out one person when state and segment filters narrow to a group of one (T8).
+- Exclusion counts are withheld for name searches and small groups, but comparing two large overlapping queries could still isolate one person (T8).
 - The role comes from an environment variable, not authenticated identity (T9).
 - A whole-file rewrite of the audit log can recompute every hash (T10).
