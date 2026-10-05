@@ -157,7 +157,8 @@ def _search_tool(gate: Gate):
     ) -> CustomerResponse:
         """Search customers. Only customers whose consent allows this purpose are returned.
 
-        The response counts how many were excluded by consent but never says who.
+        The response counts how many were excluded by consent but never says who. For
+        name searches the count is withheld, since it could reveal one person's choice.
         """
         return _call(
             gate.search_customers,

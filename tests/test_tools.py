@@ -203,6 +203,42 @@ def test_search_name_filter_treats_wildcards_literally(gate):
     assert resp.returned == 0
 
 
+def _unique_name_with_marketing(db_path: Path, status: str) -> str:
+    return query(
+        db_path,
+        "SELECT c.full_name FROM customers c JOIN consents k USING (customer_id) "
+        "WHERE k.purpose = 'marketing' AND k.status = ? AND c.full_name IN "
+        "(SELECT full_name FROM customers GROUP BY full_name HAVING COUNT(*) = 1) "
+        "ORDER BY c.customer_id LIMIT 1",
+        status,
+    )[0][0]
+
+
+def test_name_search_does_not_reveal_one_persons_consent(gate, db_path, audit_path):
+    m = gate("marketing_analyst")
+    opted_out = m.search_customers(
+        "marketing", name_contains=_unique_name_with_marketing(db_path, "denied")
+    )
+    opted_in = m.search_customers(
+        "marketing", name_contains=_unique_name_with_marketing(db_path, "granted")
+    )
+    assert (opted_out.returned, opted_in.returned) == (0, 1)
+    for resp in (opted_out, opted_in):
+        assert resp.decision == "allow"
+        assert resp.excluded_by_consent is None
+        assert "not reported for name searches" in resp.reason
+        assert "excluded" not in resp.reason
+    # The audit log keeps the truth.
+    rows = audit_rows(audit_path)
+    assert [r["excluded_count"] for r in rows] == [1, 0]
+    assert [r["decision"] for r in rows] == ["partial", "allow"]
+
+
+def test_search_without_name_filter_still_reports_exclusions(gate):
+    resp = gate("marketing_analyst").search_customers("marketing", state="PA")
+    assert resp.excluded_by_consent is not None and resp.excluded_by_consent > 0
+
+
 def test_search_unknown_purpose_denied(gate):
     resp = gate("marketing_analyst").search_customers("research", segment="affluent")
     assert resp.decision == "deny"

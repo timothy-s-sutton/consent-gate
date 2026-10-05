@@ -203,7 +203,8 @@ class CustomerResponse(BaseModel):
     purpose: str | None
     records: list[dict[str, Any]] = []
     returned: int = 0
-    excluded_by_consent: int = 0
+    # None means withheld (name searches), so the count cannot single out one person.
+    excluded_by_consent: int | None = 0
     excluded_by_reason: dict[str, int] | None = None
     truncated: bool = False
     request_id: str
