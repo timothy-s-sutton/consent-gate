@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "consent-gate-support": {
+      "command": "uv",
+      "args": ["run", "python", "-m", "consent_gate.server"],
+      "env": { "CONSENT_GATE_ROLE": "support_agent" }
+    }
+  }
+}

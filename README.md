@@ -79,6 +79,14 @@ claude mcp add consent-gate-marketing -e CONSENT_GATE_ROLE=marketing_analyst  --
 claude mcp add consent-gate-fraud     -e CONSENT_GATE_ROLE=fraud_investigator -- uv --directory /path/to/consent-gate run python -m consent_gate.server
 ```
 
+To run a session that sees only one role, without registering anything, use the config files in `redteam/`:
+
+```bash
+claude --strict-mcp-config --mcp-config redteam/support.json
+```
+
+This is how the red team exercise in [docs/RED_TEAM.md](docs/RED_TEAM.md) is run.
+
 ### Connect to Claude Desktop
 
 Add entries under `mcpServers` in `claude_desktop_config.json`. On macOS it is at `~/Library/Application Support/Claude/claude_desktop_config.json`. On Windows it is at `%APPDATA%\Claude\claude_desktop_config.json`.
