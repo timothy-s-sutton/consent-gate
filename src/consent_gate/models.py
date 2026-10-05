@@ -227,6 +227,27 @@ class WhoAmIResponse(BaseModel):
     request_id: str
 
 
+class PolicyChunk(_Frozen):
+    """One heading-delimited section of a policy document."""
+
+    source: str
+    heading: str
+    text: str
+
+
+class PolicyHit(PolicyChunk):
+    score: float
+
+
+class PolicySearchResponse(BaseModel):
+    decision: Literal["allow", "partial", "deny"]
+    reason: str
+    results: list[PolicyHit] = []
+    returned: int = 0
+    truncated: bool = False
+    request_id: str
+
+
 class LimitDecision(_Frozen):
     effective: int
     clamped: bool

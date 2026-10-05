@@ -20,9 +20,9 @@ from consent_gate.server import build_server
 from consent_gate.tools import NOT_AVAILABLE, Gate, GateError
 
 ROLE_TOOLS = {
-    "support_agent": ["whoami", "lookup_customer"],
-    "marketing_analyst": ["whoami", "search_customers", "get_marketing_audience"],
-    "fraud_investigator": ["whoami", "lookup_customer", "search_customers"],
+    "support_agent": ["whoami", "lookup_customer", "search_policy"],
+    "marketing_analyst": ["whoami", "search_customers", "get_marketing_audience", "search_policy"],
+    "fraud_investigator": ["whoami", "lookup_customer", "search_customers", "search_policy"],
 }
 ROLE_KEYS = {
     "support_agent": {

@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import logging
 import re
+import threading
 import uuid
 from collections.abc import Callable
 from typing import Any
@@ -25,18 +26,27 @@ from consent_gate.models import (
     CustomerResponse,
     DenyCode,
     PolicyConfig,
+    PolicySearchResponse,
     PurposeInfo,
     WhoAmIResponse,
 )
+from consent_gate.policy_search import PolicyIndex
 from consent_gate.redact import OUTPUT_KEYS, redact_record
 
 logger = logging.getLogger(__name__)
 
 # Tools with a handler. Roles may list more (see config/roles.yaml); those are not served.
-IMPLEMENTED_TOOLS = ("whoami", "lookup_customer", "search_customers", "get_marketing_audience")
+IMPLEMENTED_TOOLS = (
+    "whoami",
+    "lookup_customer",
+    "search_customers",
+    "get_marketing_audience",
+    "search_policy",
+)
 
 SEGMENTS = ("mass", "affluent", "small_business")
 MAX_NAME_FILTER = 64
+MAX_QUESTION_CHARS = 500
 NOT_AVAILABLE = "Denied: customer record not available for this purpose"
 NAME_SEARCH_NOTICE = "consent exclusions are not reported for name searches"
 ROLE_NOTE = (
@@ -71,6 +81,7 @@ class Gate:
         store: CustomerStore,
         audit_log: AuditLog,
         on_audit: Callable[[AuditRecord], None] | None = None,
+        policy_index: Callable[[], PolicyIndex] = PolicyIndex.from_directory,
     ) -> None:
         if role not in cfg.roles:
             raise ValueError(f"unknown role {role!r}")
@@ -79,6 +90,16 @@ class Gate:
         self.store = store
         self.audit_log = audit_log
         self.on_audit = on_audit
+        self._load_policy_index = policy_index
+        self._policy_index: PolicyIndex | None = None
+        self._policy_index_lock = threading.Lock()
+
+    def _get_policy_index(self) -> PolicyIndex:
+        """Build the policy index on first use (scikit-learn is slow to import)."""
+        with self._policy_index_lock:
+            if self._policy_index is None:
+                self._policy_index = self._load_policy_index()
+            return self._policy_index
 
     @property
     def available_tools(self) -> tuple[str, ...]:
@@ -398,6 +419,55 @@ class Gate:
                 else None
             ),
             truncated=truncated,
+            request_id=rid,
+        )
+
+    # ------------------------------------------------------------ search_policy
+
+    def search_policy(self, question: str, k: int = 3) -> PolicySearchResponse:
+        args = {"question": question, "k": k}
+        return self._run(
+            "search_policy", None, args, lambda rid: self._search_policy(rid, question, k, args)
+        )
+
+    def _search_policy(
+        self, rid: str, question: str, k: int, args: dict[str, Any]
+    ) -> PolicySearchResponse:
+        tool = "search_policy"
+
+        def deny(reason: str) -> PolicySearchResponse:
+            self._audit(
+                request_id=rid, tool=tool, purpose=None, args=args, decision="deny", reason=reason
+            )
+            return PolicySearchResponse(decision="deny", reason=reason, request_id=rid)
+
+        decision = policy.authorize_request(self.cfg, self.role, tool, None)
+        if not decision.allowed:
+            return deny(decision.reason)
+        question = question.strip()
+        if not 0 < len(question) <= MAX_QUESTION_CHARS:
+            return deny(f"Denied: question must be 1 to {MAX_QUESTION_CHARS} characters")
+        try:
+            lim = policy.clamp_limit(tool, k)
+        except ValueError:
+            return deny("Denied: k must be at least 1")
+
+        hits = self._get_policy_index().search(question, lim.effective)
+        reason = f"{len(hits)} policy sections returned"
+        if not hits:
+            reason += "; no policy text matched the question"
+        if lim.clamped:
+            reason += f", truncated at {lim.effective} (server cap {TOOL_RULES[tool].max_limit})"
+        outcome = "partial" if lim.clamped else "allow"
+        self._audit(
+            request_id=rid, tool=tool, purpose=None, args=args, decision=outcome, reason=reason
+        )
+        return PolicySearchResponse(
+            decision=outcome,
+            reason=reason,
+            results=hits,
+            returned=len(hits),
+            truncated=lim.clamped,
             request_id=rid,
         )
 

@@ -28,7 +28,13 @@ from pydantic import Field
 from consent_gate.audit import DEFAULT_AUDIT_PATH, AuditLog
 from consent_gate.config import DEFAULT_DB_PATH, load_policy_config
 from consent_gate.db import CustomerStore
-from consent_gate.models import AuditRecord, CustomerResponse, PolicyConfig, WhoAmIResponse
+from consent_gate.models import (
+    AuditRecord,
+    CustomerResponse,
+    PolicyConfig,
+    PolicySearchResponse,
+    WhoAmIResponse,
+)
 from consent_gate.tools import Gate, GateError
 
 logger = logging.getLogger("consent_gate.server")
@@ -185,11 +191,27 @@ def _audience_tool(gate: Gate):
     return get_marketing_audience
 
 
+def _policy_tool(gate: Gate):
+    def search_policy(
+        question: Annotated[str, Field(description="A question about Larkspur policy")],
+        k: Annotated[int, Field(description="Number of sections to return. Capped at 5.")] = 3,
+    ) -> PolicySearchResponse:
+        """Search Larkspur's privacy, data classification, and AI use policies.
+
+        Returns matching sections with source file and heading so you can cite them.
+        No customer data is involved and no purpose is needed.
+        """
+        return _call(gate.search_policy, question=question, k=k)
+
+    return search_policy
+
+
 _TOOL_FACTORIES = {
     "whoami": _whoami_tool,
     "lookup_customer": _lookup_tool,
     "search_customers": _search_tool,
     "get_marketing_audience": _audience_tool,
+    "search_policy": _policy_tool,
 }
 
 
