@@ -44,3 +44,4 @@ These are tracked as residual risks in [THREAT_MODEL.md](THREAT_MODEL.md):
 - Exclusion counts are withheld for name searches and small groups, but comparing two large overlapping queries could still isolate one person (T8).
 - The role comes from an environment variable, not authenticated identity (T9).
 - A whole-file rewrite of the audit log can recompute every hash (T10).
+- The gateway governs only the calls it receives. In the red team, the agent tried to read the database file directly with its own tools; Claude Code blocked it, not consent-gate (T15).

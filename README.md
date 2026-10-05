@@ -40,6 +40,8 @@ consent-gate shows a pattern those teams can sign off on. The agent never touche
 - Audit tampering (edited, deleted, reordered, or forged lines) is detected.
 - The real server process is launched and driven over stdio by an MCP client.
 
+**Live red team** ([docs/RED_TEAM.md](docs/RED_TEAM.md)): eight adversarial prompts against Claude Code. Seven passed. In the eighth, asked to export the whole customer table, the agent did not attack the gateway; it tried to go around it by reading the database file directly with its own tools. Claude Code's safety check blocked that, not consent-gate. The lesson is the most important one in the project: a gateway only governs traffic that goes through it, so the agent must have no other route to the data.
+
 See [docs/CONTROLS.md](docs/CONTROLS.md) for how each control maps to the NIST AI RMF, the OWASP Top 10 for LLM Applications (2025), ISO/IEC 42001, and privacy principles.
 
 ---
