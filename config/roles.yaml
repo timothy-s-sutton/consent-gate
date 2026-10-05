@@ -1,0 +1,47 @@
+# Roles for consent-gate. The active role is chosen by the CONSENT_GATE_ROLE
+# environment variable at server startup, never by the agent.
+#
+# fields: every field the role may receive, and how it is shown.
+#   plain           returned as stored
+#   last4           masked to the last four digits (the only option for ssn and card_number)
+#   untrusted_text  free text, scrubbed and labeled as untrusted (the only option for notes)
+# A field not listed is never returned. There is no wildcard.
+
+roles:
+  support_agent:
+    purposes: [servicing]
+    tools: [whoami, lookup_customer, search_policy]
+    fields:
+      customer_id: plain
+      full_name: plain
+      email: plain
+      phone: plain
+      state: plain
+      ssn: last4
+      notes: untrusted_text
+
+  marketing_analyst:
+    purposes: [marketing, analytics]
+    tools: [whoami, search_customers, get_marketing_audience, search_policy]
+    fields:
+      customer_id: plain
+      full_name: plain
+      email: plain
+      state: plain
+      segment: plain
+
+  fraud_investigator:
+    purposes: [fraud_prevention]
+    tools: [whoami, lookup_customer, search_customers, search_policy]
+    fields:
+      customer_id: plain
+      full_name: plain
+      email: plain
+      phone: plain
+      ssn: last4
+      card_number: last4
+      state: plain
+      segment: plain
+      do_not_sell_or_share: plain
+      notes: untrusted_text
+      created_at: plain

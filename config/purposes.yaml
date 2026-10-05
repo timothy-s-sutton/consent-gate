@@ -1,0 +1,29 @@
+# Purposes of processing for Larkspur Financial (fictional).
+#
+# Every use of customer data needs a legal basis. Only some bases require the
+# customer's consent. A purpose that requires consent is allowed for a customer
+# only when that customer's consent record for the same purpose is "granted".
+#
+# Anything not listed here is an unknown purpose and is denied.
+
+purposes:
+  servicing:
+    legal_basis: contract
+    requires_consent: false
+    description: Answering a customer's own service requests.
+
+  fraud_prevention:
+    legal_basis: legal obligation / legitimate interest
+    requires_consent: false
+    description: Detecting and investigating fraud.
+
+  marketing:
+    legal_basis: consent
+    requires_consent: true
+    honor_do_not_sell_or_share: true # CCPA/CPRA opt-out also excludes the customer
+    description: Building audiences for marketing campaigns.
+
+  analytics:
+    legal_basis: consent
+    requires_consent: true
+    description: Aggregate analysis of customer behavior.
