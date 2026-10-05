@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+build/
+dist/
+
+# Tooling caches
+.pytest_cache/
+.ruff_cache/
+
+# Generated data and logs (rebuilt locally, never committed)
+data/*
+!data/.gitkeep
+logs/*
+!logs/.gitkeep
+
+# Local environment
+.env
