@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from enum import StrEnum
 from types import MappingProxyType
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, computed_field, model_validator
 
@@ -163,6 +163,33 @@ class Decision(_Frozen):
         if not self.allowed and (self.code is None or self.fields):
             raise ValueError("a deny decision needs a code and must grant no fields")
         return self
+
+
+# ------------------------------------------------------------------ audit
+
+
+class AuditEvent(_Frozen):
+    """What a tool call reports to the audit log."""
+
+    request_id: str
+    role: str
+    tool: str
+    purpose: str | None
+    args: dict[str, Any]
+    decision: Literal["allow", "partial", "deny"]
+    reason: str
+    record_ids_returned: list[str] = []
+    excluded_count: int = 0
+    fields_masked: list[str] = []
+    scrub_replacements: int = 0
+
+
+class AuditRecord(AuditEvent):
+    """One line of logs/audit.jsonl."""
+
+    ts: str
+    prev_hash: str
+    hash: str
 
 
 class LimitDecision(_Frozen):
