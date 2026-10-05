@@ -27,11 +27,10 @@ from pathlib import Path
 
 from faker import Faker
 
-from consent_gate.config import PROJECT_ROOT
+from consent_gate.config import DEFAULT_DB_PATH
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_DB_PATH = PROJECT_ROOT / "data" / "larkspur.db"
 DEFAULT_SEED = 42
 DEFAULT_COUNT = 500
 

@@ -192,6 +192,40 @@ class AuditRecord(AuditEvent):
     hash: str
 
 
+# ------------------------------------------------------------------ tool responses
+
+
+class CustomerResponse(BaseModel):
+    """Envelope for every customer-data tool (SPEC.md section 8)."""
+
+    decision: Literal["allow", "partial", "deny"]
+    reason: str
+    purpose: str | None
+    records: list[dict[str, Any]] = []
+    returned: int = 0
+    excluded_by_consent: int = 0
+    excluded_by_reason: dict[str, int] | None = None
+    truncated: bool = False
+    request_id: str
+
+
+class PurposeInfo(BaseModel):
+    name: str
+    legal_basis: str
+    requires_consent: bool
+    description: str
+
+
+class WhoAmIResponse(BaseModel):
+    role: str
+    allowed_purposes: list[PurposeInfo]
+    visible_tools: list[str]
+    fields_returned: dict[str, str]
+    record_limits: dict[str, int]
+    note: str
+    request_id: str
+
+
 class LimitDecision(_Frozen):
     effective: int
     clamped: bool

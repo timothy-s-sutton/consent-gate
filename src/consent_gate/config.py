@@ -10,6 +10,7 @@ from consent_gate.models import PolicyConfig
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 CONFIG_DIR = PROJECT_ROOT / "config"
+DEFAULT_DB_PATH = PROJECT_ROOT / "data" / "larkspur.db"
 
 
 def load_policy_config(config_dir: Path = CONFIG_DIR) -> PolicyConfig:
